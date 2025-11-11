@@ -1,0 +1,190 @@
+{% extends 'scraperSite/base_template.html' %}
+{% load static %}
+
+{% block title %}Manual Course Scanning-Moodle Security{% endblock %}
+
+{% block content %}
+<!-- Page-specific stylesheet -->
+<link rel="stylesheet" href="{% static 'scraperSite/css/manual_scan.css' %}">
+
+<div class="manual-wrapper">
+  <div class="log-container">
+    <!-- Header / title -->
+    <div class="section-header" style="text-align:center; margin-bottom:10px;">
+      <div class="section-title" style="margin:0; font-size:28px; font-weight:700;">
+        Manual Course Scanning
+      </div>
+    </div>
+
+    <!-- Moodle Courses -->
+    <form method="post" action="{% url 'manual_scan' %}" id="manualScanForm">
+      {% csrf_token %}
+
+      <!-- Hidden field: JS sets this to selected course -->
+      <input type="hidden" name="course_id" id="courseIdInput" />
+
+      <!-- Top row: Course filter (left) + buttons (right) -->
+      <div class="top-row">
+        <div class="filter-form">
+          <div class="filter-row">
+            <div class="filter-item">
+              <div class="filter-wrapper">
+                <!-- Text input for filtering courses -->
+                <input
+                  type="text"
+                  id="courseFilter"
+                  class="course-filter-input"
+                  placeholder="Type course name to filter..."
+                  onkeyup="filterCourses()"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="manual-actions">
+          <button type="submit" id="scanBtn" class="primary-btn" disabled>
+            Scan This Course
+          </button>
+
+          <a
+            href="{% url 'manual_scan_log' %}"
+            data-base-url="{% url 'manual_scan_log' %}"
+            id="viewLogBtn"
+            class="secondary-btn disabled-link"
+          >
+            Selected Course Scanned Log
+          </a>
+        </div>
+      </div>
+
+      <!-- Note: under buttons, above table -->
+<div class="note-text text-start mb-2">
+  <strong>Note:</strong>
+  Type part of a course name to filter the table, then click a row and press "Scan This Course".
+</div>
+
+            <!-- Courses table -->
+      <table class="activity-table wide">
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Course Manager(s)</th>
+            <th>Email(s)</th>
+            <th>
+              Created Time
+              <span style="font-weight:400; font-size:13px;">
+                UTC+8
+              </span>
+            </th>
+          </tr>
+        </thead>
+
+        <tbody id="courseTableBody">
+          {% for course in courses %}
+          <tr data-course-id="{{ course.id }}" onclick="selectCourse('{{ course.id }}')">
+            <td>{{ course.fullname }}</td>
+            <td class="col-managers"></td>
+            <td class="col-emails"></td>
+            <td>
+              {% if course.created_dt %}
+                {{ course.created_dt|date:"Y-m-d H:i" }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+
+          <tr id="noResultsRow" class="no-results-row" style="display:none;">
+            <td colspan="4">No courses found matching your filter.</td>
+          </tr>
+        </tbody>
+      </table>
+
+<!-- Pagination footer -->
+<div id="coursePaginationWrapper"
+     class="course-pagination d-flex align-items-center mt-2 small">
+  <!-- left side: info text -->
+  <div id="coursePaginationInfo"
+       class="pagination-info flex-grow-1 text-start">
+    <!-- JS will insert: Page X of Y • Showing ... -->
+  </div>
+
+  <!-- right side: buttons -->
+  <div class="pagination-buttons ms-auto">
+    <button type="button"
+            id="coursePrevPage"
+            class="btn btn-outline-secondary btn-sm me-1">
+      Previous
+    </button>
+    <button type="button"
+            id="courseNextPage"
+            class="btn btn-outline-secondary btn-sm">
+      Next
+    </button>
+  </div>
+</div>
+
+<!-- Scan Result Popup -->
+<div id="scanResultPopup" class="popup">
+  <div class="popup-content scan-popup">
+    <span class="close-btn" onclick="closeScanPopup()">&times;</span>
+    <h3 class="scan-popup-title">Scan Results for {{ course_name }}</h3>
+
+    <!-- Summary “table” -->
+    <div class="scan-summary">
+      <div class="summary-item">
+        <span class="summary-label">Report #</span>
+        <span class="summary-value" id="summaryReportId">–</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Date</span>
+        <span class="summary-value" id="summaryReportDate">–</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Total links</span>
+        <span class="summary-value" id="summaryTotalLinks">–</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Safe</span>
+        <span class="summary-value" id="summarySafeLinks">–</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Suspicious</span>
+        <span class="summary-value" id="summarySuspicious">–</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">Malicious</span>
+        <span class="summary-value summary-bad" id="summaryMalicious">–</span>
+      </div>
+    </div>
+
+    <!-- Unsafe URLs section -->
+    <div class="unsafe-section">
+      <h4>Unsafe URLs</h4>
+      <p class="unsafe-help" id="noUnsafeUrlsMsg">No unsafe URLs found 🎉</p>
+      <ul id="unsafeUrlList" class="unsafe-list"></ul>
+    </div>
+
+    <!-- Hidden raw text (for parsing / debugging) -->
+    <pre id="scanResultRaw" class="scan-result-raw">{{ scan_result }}</pre>
+  </div>
+</div>
+
+<!-- Scanning Overlay -->
+<div id="scanningOverlay" class="scanning-overlay">
+  <div class="loader"></div>
+  Course is scanning... Please wait.
+</div>
+
+<!-- Inject Django data into JS globals -->
+<script>
+  window.courseManagers = JSON.parse('{{ course_managers_json|escapejs }}');
+  window.hasScanResultPopup = {% if scan_result %}true{% else %}false{% endif %};
+</script>
+
+<!-- Page-specific script -->
+<script src="{% static 'scraperSite/js/manual_scan.js' %}"></script>
+
+{% endblock %}

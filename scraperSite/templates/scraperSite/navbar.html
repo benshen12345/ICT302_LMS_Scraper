@@ -1,0 +1,19 @@
+<!-- Navbar -->
+<div class="navbar">
+    <div class="logo">
+        <h2>Moodle Security</h2>
+    </div>
+
+    <!-- Navigation Links -->
+    <ul class="nav-links">
+        <li><a href="{% url 'home' %}">Automatic Scan</a></li>
+        <li><a href="{% url 'manual_scan' %}">Manual Scan</a></li>
+        <li><a href="{% url 'guide' %}">Guide</a></li>
+    </ul>
+
+    <!-- User Info -->
+    <div class="user">
+        <span>Welcome, {{ fullname }}</span>
+        <a href="{% url 'logout' %}">Logout</a>
+    </div>
+</div>

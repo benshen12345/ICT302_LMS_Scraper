@@ -1,0 +1,27 @@
+# IDE settings
+.idea/
+
+# Virtual environment (if you create one later)
+env/
+venv/
+.myEnv/
+myEnv/
+
+# Secrets / environment
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs and runtime output
+logs/
+*.log
+
+# Data & models (can be large / private)
+datasets/
+trained_models/
+url_details/
+
+# Django DB (if you ever use SQLite)
+db.sqlite3

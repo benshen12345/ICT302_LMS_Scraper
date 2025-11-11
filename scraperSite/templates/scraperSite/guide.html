@@ -1,0 +1,35 @@
+{% extends 'scraperSite/base_template.html' %}
+{% block title %}Guide-Moodle Security{% endblock %}
+
+{% block content %}
+<h2 style="text-align:center; margin-bottom:20px;">Moodle Security Guide</h2>
+
+<div style="display:flex; flex-direction:column; gap:20px; max-width:600px; margin:0 auto;">
+
+    <div style="background-color:#f8d7da; color:#721c24; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">Course Scanning</h3>
+        <p>The system will automatically scan active courses and courses are going to be active in 4 weeks every <strong>Saturday at 1:00 AM</strong>.</p>
+    </div>
+
+    <div style="background-color:#d1ecf1; color:#0c5460; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">Dashboard Reports</h3>
+        <p>The dashboard visualization will be automatically sent to the <strong>admin email</strong> every Sunday. To view the logs, go to Dashboard -> Select Period -> View Scanned Log.</p>
+    </div>
+
+    <div style="background-color:#f8d7da; color:#721c24; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">Log history</h3>
+        <p>Scanned activities and login/logout log is recorded and can be found in logs folder inside project.</p>
+    </div>
+
+    <div style="background-color:#d1ecf1; color:#0c5460; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">File scanning</h3>
+        <p>It will take more time while running scanning files. This feature only enable when folder is mounted in this demo version. </p>
+    </div>
+
+    <div style="background-color:#f8d7da; color:#721c24; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+        <h3 style="margin-top:0;">AI loading</h3>
+        <p>This system is using AI for URLs scanning. Therefore, the scanning speed might be slow on courses that have various URLs and files</p>
+    </div>
+
+</div>
+{% endblock %}

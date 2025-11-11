@@ -1,0 +1,106 @@
+{% extends 'scraperSite/base_template.html' %}
+{% block title %}Home-Moodle Security{% endblock %}
+
+
+{% block content %}
+        <h1>Automatic Course Scanning</h1>
+
+        <!-- Year / Month / Period Selection -->
+        <form method="post" id="periodForm">
+            {% csrf_token %}
+            <div class="section-title">Select Period</div>
+            <div class="row">
+                <label for="year">Year:</label>
+                <select name="year" id="year" onchange="updateMonths()">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="month">Month:</label>
+                <select name="month" id="month" onchange="updatePeriods()"></select>
+
+                <label for="period">Period:</label>
+                <select name="period" id="period"></select>
+
+                <div class="actions">
+                    <button type="submit" formtarget="_blank" formaction="https://app.powerbi.com/reportEmbed?reportId=a3c4397d-a6ff-4aca-a31e-1ada3e7b439b&autoAuth=true&ctid=c00d4c1b-cf7b-4e93-b7c7-10113a9bc230">View PowerBI Report</button>
+                    <button type="submit" formaction="{% url 'view_scanned_log' %}" id="periodViewLogBtn">View Scanned Log</button>
+                </div>
+            </div>
+        </form>
+
+        <script>
+    const yearMonthMap = {{ year_month_map|safe }};
+    const monthPeriodMap = JSON.parse('{{ month_period_map_json|escapejs }}');
+
+    // Load from localStorage if available, otherwise use Django defaults
+    let selectedYear = localStorage.getItem('dash_year') || "{{ selected_year }}";
+    let selectedMonth = localStorage.getItem('dash_month') || "{{ selected_month }}";
+    let selectedPeriod = localStorage.getItem('dash_period') || "{{ selected_period_key }}";
+
+    function updateMonths() {
+        const year = document.getElementById("year").value;
+        const monthSelect = document.getElementById("month");
+        monthSelect.innerHTML = "";
+
+        yearMonthMap[year].forEach(m => {
+            const option = document.createElement("option");
+            option.value = m;
+            option.text = new Date(2000, m-1).toLocaleString('default', { month: 'long' });
+            monthSelect.appendChild(option);
+        });
+
+        // restore selected month
+        monthSelect.value = selectedMonth;
+        updatePeriods();
+    }
+
+    function updatePeriods() {
+        const year = document.getElementById("year").value;
+        const month = document.getElementById("month").value;
+        const periodSelect = document.getElementById("period");
+        periodSelect.innerHTML = "";
+
+        const key = `${year}-${month}`;
+        if (monthPeriodMap[key]) {
+            for (const [k, v] of Object.entries(monthPeriodMap[key])) {
+                const option = document.createElement("option");
+                option.value = k;
+                option.text = v;
+                periodSelect.appendChild(option);
+            }
+
+            // restore selected period if exists
+            if (key === `${selectedYear}-${selectedMonth}` && monthPeriodMap[key][selectedPeriod]) {
+                periodSelect.value = selectedPeriod;
+            } else {
+                periodSelect.selectedIndex = periodSelect.options.length - 1;
+            }
+        }
+
+        // save latest selections
+        saveSelections();
+    }
+
+    function saveSelections() {
+        localStorage.setItem('dash_year', document.getElementById("year").value);
+        localStorage.setItem('dash_month', document.getElementById("month").value);
+        localStorage.setItem('dash_period', document.getElementById("period").value);
+    }
+
+    // Save whenever any select changes
+    document.addEventListener('DOMContentLoaded', () => {
+        ['year', 'month', 'period'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', saveSelections);
+        });
+
+        // Restore when loading page
+        document.getElementById("year").value = selectedYear;
+        updateMonths();
+    });
+
+    // If you reload or come back from View Log, it will remember your selections
+</script>
+{% endblock %}
